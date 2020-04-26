@@ -2,10 +2,10 @@
 
 #pragma once
 
-#ifndef VENTILATOR_H
-#define VENTILATOR_H
+#ifndef CHEAP_VENTILATOR_H
+#define CHEAP_VENTILATOR_H
 
-enum EMovementState {
+enum ECVState {
 	DISABLE,
 	FORWARD,
 	BACK,
@@ -14,16 +14,17 @@ enum EMovementState {
 
 typedef void(*MoveHandler)(unsigned short, boolean);
 typedef void(*StopHandler)(void);
-typedef void(*ChangeStateHandler)(EMovementState);
+typedef void(*ChangeStateHandler)(ECVState);
 
-class Ventilator
+class CheapVentilator
 {
 	unsigned short switchPin;
 
-	const unsigned short minSpeed = 50;
+	const unsigned short minSpeed = 1;
 	const unsigned short maxSpeed = 255;
+	const unsigned short backSpeed = 127;
 
-	const unsigned short minForward = 20;
+	const unsigned short minForward = 1;
 	const unsigned short maxForward = 1200;
 
 	unsigned short pumpingSpeed;
@@ -32,13 +33,13 @@ class Ventilator
 	unsigned int idleTime;
 	unsigned long stopTime;
 
-	EMovementState state;
+	ECVState state;
 
 	MoveHandler onMoveHandler;
 	StopHandler onStopHandler;
 	ChangeStateHandler onChangeStateHandler;
 
-	void setState(const EMovementState state);
+	void setState(const ECVState state);
 	void nextState();
 
 	unsigned long calculateDuration(
@@ -66,8 +67,8 @@ class Ventilator
 	void moveBack();
 
 public:
-	Ventilator(const unsigned short switchPin);
-	~Ventilator();
+	CheapVentilator(const unsigned short switchPin);
+	~CheapVentilator();
 
 	void begin();
 	void restart();
@@ -86,6 +87,9 @@ public:
 
 	void setIdleTime(const unsigned int milliseconds) { this->idleTime = milliseconds; }
 	const unsigned int getIdleTime() { return this->idleTime; }
+
+	char const* getStateName(ECVState);
+	char const* getStateName() { return getStateName(this->state); }
 };
 
 #endif

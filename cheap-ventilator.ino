@@ -1,5 +1,5 @@
 #include "BTS7960.h"
-#include "./Ventilator.h"
+#include "./CheapVentilator.h"
 
 #define L_EN 8
 #define R_EN 9
@@ -9,17 +9,20 @@
 
 BTS7960 motorController(L_EN, R_EN, L_PWM, R_PWM);
 
-Ventilator ventilator(SWITCH_PIN);
+CheapVentilator cv(SWITCH_PIN);
 void setup() 
 {
   Serial.begin(9600);
-  ventilator.begin();
 
-  ventilator.onStop([]() {
+  cv.onChangeState([](ECVState state) {
+    Serial.println(cv.getStateName());
+  });
+
+  cv.onStop([]() {
     motorController.Stop();
   });
-   
-  ventilator.onMove([](unsigned short speed, boolean clockwise) {
+
+  cv.onMove([](unsigned short speed, boolean clockwise) {
     motorController.Enable();
     if (clockwise)
       motorController.TurnRight(speed);
@@ -27,10 +30,10 @@ void setup()
      motorController.TurnLeft(speed);
   });
 
- 
+  cv.begin();
 }
 
 void loop() 
 {
-  ventilator.update();
+  cv.update();
 }
