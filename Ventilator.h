@@ -1,58 +1,91 @@
 #include "arduino.h"
-#include "BTS7960.h"
 
 #pragma once
 
 #ifndef VENTILATOR_H
 #define VENTILATOR_H
 
-enum EVentilatorState {
-	DISABLED,
-	IDLE,
+enum EMovementState {
+	DISABLE,
 	FORWARD,
-	BACK
+	BACK,
+	IDLE
 };
+
+typedef void(*MoveHandler)(unsigned short, boolean);
+typedef void(*StopHandler)(void);
+typedef void(*ChangeStateHandler)(EMovementState);
 
 class Ventilator
 {
-private:
 	unsigned short switchPin;
 
-	EVentilatorState state;
-	unsigned int idleTime;
+	const unsigned short minSpeed = 50;
+	const unsigned short maxSpeed = 255;
+
+	const unsigned short minForward = 20;
+	const unsigned short maxForward = 1200;
 
 	unsigned short pumpingSpeed;
-	unsigned int pumpingForwardDistance;
+	unsigned short pumpingForward;
 
-	unsigned short prepareSpeed;
-	unsigned int prepareForwardDistance;
+	unsigned int idleTime;
+	unsigned long stopTime;
 
-	unsigned int minSpeed;
-	unsigned int maxSpeed;
-	unsigned int minDistance;
-	unsigned int maxDistance;
+	EMovementState state;
 
-	BTS7960 *motorController;
+	MoveHandler onMoveHandler;
+	StopHandler onStopHandler;
+	ChangeStateHandler onChangeStateHandler;
 
-	void turnMotor(unsigned int distance, unsigned short speed, bool right);
+	void setState(const EMovementState state);
+	void nextState();
 
-	void moveForward(unsigned int distance, unsigned short speed);
-	void moveBack(unsigned int distance, unsigned short speed);
+	unsigned long calculateDuration(
+		const unsigned short forward,
+		const unsigned short speed
+	);
+
+	void move(
+		const unsigned int forward,
+		const unsigned short
+		speed,
+		const bool clockwise
+	);
+
+	void moveForward(
+		const unsigned int forward, 
+		const unsigned short speed
+	);
+
+	void moveBack(
+		const unsigned int forward,
+		const unsigned short speed
+	);
+
 	void moveBack();
 
-	void idle(unsigned int waitTime);
-
-	void myDelay(unsigned long duration);
-
 public:
-	Ventilator(unsigned short lEN, unsigned short rEN, unsigned short lPWM, unsigned short rPWM, unsigned short switchPin);
-
-	void setPumpingSpeed(unsigned short speed);
-	unsigned short getPumpingSpeed() { return pumpingSpeed; }
+	Ventilator(const unsigned short switchPin);
+	~Ventilator();
 
 	void begin();
 	void restart();
-	void disable();
+	void update();
+	void stop();
+
+	void onMove(MoveHandler handler) { onMoveHandler = handler; }
+	void onStop(StopHandler handler) { onStopHandler = handler; }
+	void onChangeState(ChangeStateHandler handler) { onChangeStateHandler = handler; }
+
+	void setSpeed(const unsigned short speed) { this->pumpingSpeed = speed; }
+	const unsigned short getSpeed() { return this->pumpingSpeed; }
+
+	void setForward(const unsigned short forward) { this->pumpingForward = forward; }
+	const unsigned short getForward() { return this->pumpingForward; }
+
+	void setIdleTime(const unsigned int milliseconds) { this->idleTime = milliseconds; }
+	const unsigned int getIdleTime() { return this->idleTime; }
 };
 
 #endif

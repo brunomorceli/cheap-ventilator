@@ -1,74 +1,100 @@
 #include "Ventilator.h"
 
-Ventilator::Ventilator(unsigned short lEN, unsigned short rEN, unsigned short lPWM, unsigned short rPWM, unsigned short switchPin)
+Ventilator::Ventilator(const unsigned short switchPin)
 {
 	this->switchPin = switchPin;
 
-	this->state = DISABLED;
-	this->idleTime = 5000;
-	
-	this->pumpingSpeed = 100;
-	this->pumpingForwardDistance = 700;
-	
-	this->prepareSpeed = 50;
-	this->prepareForwardDistance = 100;
+	this->pumpingSpeed = 127;
+	this->pumpingForward = 600;
 
-	this->minSpeed = 50;
-	this->maxSpeed = 255;
+	this->idleTime = 4000;
+	this->stopTime = 0.0f;
 
-	this->minDistance = 20;
-	this->maxDistance = 900;
+	this->state = DISABLE;
 
-	this->motorController = new BTS7960(lEN, rEN, lPWM, rPWM);
+	onMoveHandler = NULL;
+	onStopHandler = NULL;
+	onChangeStateHandler = NULL;
 }
 
-void Ventilator::turnMotor(unsigned int distance, unsigned short speed, bool right)
+Ventilator::~Ventilator()
 {
-	float speedRating = (float) maxSpeed / speed;
-	float duration = distance * speedRating;
-
-	motorController->Enable();
-
-	if (right)
-		motorController->TurnRight(speed);
-	else 
-		motorController->TurnLeft(speed);
-
-	myDelay(duration);
+	// void
 }
 
-void Ventilator::moveForward(unsigned int distance, unsigned short speed)
+void Ventilator::setState(const EMovementState state)
 {
-	state = FORWARD;
-	turnMotor(constrain(distance, minDistance, maxDistance), constrain(speed, minSpeed, maxSpeed), true);
+	if (this->state != state && onChangeStateHandler != NULL)
+		onChangeStateHandler(state);
 
-	if (state == FORWARD) 
-		moveBack();
+	this->state = state;
+
+	if (onStopHandler != NULL)
+		onStopHandler();
+
+	switch (state)
+	{
+		case IDLE:
+			stopTime = millis() + idleTime;
+			break;
+		case FORWARD:
+			moveForward(pumpingForward, pumpingSpeed);
+			break;
+		case BACK: 
+			moveBack();
+			break;
+		default:
+			break;
+	}
 }
 
-void Ventilator::moveBack(unsigned int distance, unsigned short speed)
+void Ventilator::nextState()
 {
-	state = BACK;
-	turnMotor(distance, speed, false);
+	switch (state)
+	{
+		case IDLE:
+			setState(FORWARD);
+			break;
+		case FORWARD:
+			setState(BACK);
+			break;
+		case BACK:
+			setState(IDLE);
+			break;
+		default:
+			break;
+	}
+}
 
-	if (state == BACK)
-		idle(idleTime);
+unsigned long Ventilator::calculateDuration(const unsigned short forward, const unsigned short speed)
+{
+	return (unsigned long) (forward * (float)(this->maxSpeed / speed));
+}
+
+void Ventilator::move(const unsigned int forward, const unsigned short speed, const bool clockwise)
+{
+	stopTime = millis() + calculateDuration(
+		constrain(forward, this->minForward, this->maxForward),
+		constrain(speed, this->minSpeed, this->maxSpeed)
+	);
+
+	if (onMoveHandler != NULL && onStopHandler != NULL)
+		onMoveHandler(speed, clockwise);
+}
+
+void Ventilator::moveForward(const unsigned int forward, const unsigned short speed)
+{
+	move(forward, speed, true);
+}
+
+void Ventilator::moveBack(const unsigned int forward, const unsigned short speed)
+{
+	move(forward, speed, false);
 }
 
 void Ventilator::moveBack()
 {
-	 moveBack(3000, pumpingSpeed);
-}
-
-void Ventilator::idle(unsigned int waitTime)
-{
-	state = IDLE;
-	motorController->Stop();
-
-	myDelay(waitTime);
-
-	if (state == IDLE)
-		moveForward(pumpingForwardDistance, pumpingSpeed);
+	 moveBack(this->maxForward * 2, pumpingSpeed);
 }
 
 void Ventilator::begin()
@@ -79,28 +105,25 @@ void Ventilator::begin()
 
 void Ventilator::restart()
 {
-	if (state == FORWARD || state == BACK)
-		idle(100);
-
-	moveForward(prepareForwardDistance, prepareSpeed);
+	stopTime = 0.0f;
+	setState(FORWARD);
 }
 
-void Ventilator::disable()
+void Ventilator::stop()
 {
-	state = DISABLED;
-	motorController->Stop();
+	state = DISABLE;
+	stopTime = 0.0f;
+
+	if (onStopHandler != NULL)
+		onStopHandler();
+
+	if (onChangeStateHandler != NULL)
+		onChangeStateHandler(state);
 }
 
-void Ventilator::myDelay(unsigned long duration)
-{  
-	unsigned long start = millis();
-
-	while (millis() - start <= duration)
-	{
-		if (state == BACK && digitalRead(switchPin) == HIGH)
-		{
-			idle(idleTime);
-			break;
-		}
-	}
+void Ventilator::update()
+{
+	bool switchPushed = digitalRead(switchPin) == HIGH;
+	if ((state == BACK && switchPushed) || (stopTime > 0 && stopTime < millis()))
+		nextState();
 }
