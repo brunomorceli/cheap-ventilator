@@ -1,5 +1,6 @@
 #include "BTS7960.h"
-#include "./CheapVentilator.h"
+#include "./MotorController.h"
+#include "./Encoder.h"
 
 #define L_EN 8
 #define R_EN 9
@@ -7,33 +8,55 @@
 #define R_PWM 11
 #define SWITCH_PIN 12
 
-BTS7960 motorController(L_EN, R_EN, L_PWM, R_PWM);
+#define CONTROLLER_PIN A0
 
-CheapVentilator cv(SWITCH_PIN);
+using namespace CheapVentilator;
+
+BTS7960 dcMotorController(L_EN, R_EN, L_PWM, R_PWM);
+Encoder encoder(3,4,5);
+
+MotorController cvMotorController(SWITCH_PIN);
 void setup() 
 {
   Serial.begin(9600);
 
-  cv.onChangeState([](ECVState state) {
-    Serial.println(cv.getStateName());
+  cvMotorController.onChangeState([](ECVState state) {
+    Serial.println(cvMotorController.getStateName());
   });
 
-  cv.onStop([]() {
-    motorController.Stop();
+  cvMotorController.onStop([]() {
+    dcMotorController.Stop();
   });
 
-  cv.onMove([](unsigned short speed, boolean clockwise) {
-    motorController.Enable();
+  cvMotorController.onMove([](unsigned short speed, boolean clockwise) {
+    /*dcMotorController.Enable();
     if (clockwise)
-      motorController.TurnRight(speed);
+      dcMotorController.TurnRight(speed);
      else
-     motorController.TurnLeft(speed);
+     dcMotorController.TurnLeft(speed);*/
   });
 
-  cv.begin();
+  cvMotorController.begin();
+
+
+  encoder.onNext([]() {
+    Serial.println("Next");
+  });
+
+  encoder.onPreview([]() {
+    Serial.println("Preview");
+  });
+
+  encoder.onClick([]() {
+    Serial.println("Click");
+  });
 }
 
 void loop() 
 {
-  cv.update();
+  //int a = analogRead(CONTROLLER_PIN);
+  //Serial.println(a);
+
+  encoder.update();
+  //cvMotorController.update();
 }
