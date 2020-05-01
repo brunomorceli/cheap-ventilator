@@ -13,15 +13,7 @@ namespace CheapVentilator
     EDITING
   };
 
-  enum EVMenuOption
-  {
-    SPEED,
-    FORWARD_DISTANCE,
-    IDLE_TIME,
-    LANGUAGE
-  };
-
-  enum EVMenuValueType
+  enum EVMenuOptionType
   {
     RANGE,
     OPTIONS,
@@ -34,13 +26,12 @@ namespace CheapVentilator
   struct MenuOption
   {
     String title;
-    EVMenuOption option;
-    EVMenuValueType type;
+    EVMenuOptionType type;
     unsigned short min;
     unsigned short max;
     unsigned short amount;
-    unsigned short step;
-    String[] options;
+    unsigned short amountStep;
+    MenuOption[] options;
   };
   
 	class Menu

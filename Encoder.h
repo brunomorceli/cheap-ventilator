@@ -7,39 +7,45 @@
 
 namespace CheapVentilator
 {
-	typedef void(*NextHandler)(void);
-  typedef void(*PreviewHandler)(void);
-	typedef void(*ClickHandler)(void);
+	typedef void(*EncoderNextHandler)(void);
+  typedef void(*EncoderPreviewHandler)(void);
+	typedef void(*EncoderClickHandler)(void);
 
 	class Encoder
 	{
-  
-    unsigned short CLKPin;
-    unsigned short DTPin;
-    unsigned short SWPin;
+    unsigned short outputA;
+    unsigned short outputB;
+    unsigned short switchOutput;
+
+    unsigned int aState;
+    unsigned int aLastState;
+    boolean switchState;
+    boolean switchLastState;
 
     unsigned long delayTime;
     unsigned long nextActionTime;
-    boolean clockwise;
-    boolean click;
 
-    NextHandler onNextHandler;
-    PreviewHandler onPreviewHandler;
-    ClickHandler onClickHandler;
-
+    EncoderNextHandler onNextHandler;
+    EncoderPreviewHandler onPreviewHandler;
+    EncoderClickHandler onClickHandler;
 
     void setNextAction(unsigned long time);
     void triggerOnNextEvent();
     void triggerOnPreview();
     void triggerOnClick();
- 
+
 	public:
-		Encoder(const unsigned short CLKPin, const unsigned short DTPin, const unsigned short SWPin);
+		Encoder(
+      const unsigned short outputA, 
+      const unsigned short outputB, 
+      const unsigned short switchOutput=0
+    );
+
     ~Encoder(void);
 
-    void onNext(NextHandler handler) { onNextHandler = handler; };
-    void onPreview(PreviewHandler handler) { onPreviewHandler = handler; }
-    void onClick(ClickHandler handler) { onClickHandler = handler; };
+    void onNext(EncoderNextHandler handler) { onNextHandler = handler; };
+    void onPreview(EncoderPreviewHandler handler) { onPreviewHandler = handler; }
+    void onClick(EncoderClickHandler handler) { onClickHandler = handler; };
 
     void setDelay(unsigned long time) { this->delayTime = time; }
 

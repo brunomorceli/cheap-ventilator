@@ -14,9 +14,9 @@ namespace CheapVentilator
 		IDLE
 	};
 
-	typedef void(*MoveHandler)(unsigned short, boolean);
-	typedef void(*StopHandler)(void);
-	typedef void(*ChangeStateHandler)(ECVState);
+	typedef void(*MotorControllerMoveHandler)(unsigned short, boolean);
+	typedef void(*MotorControllerStopHandler)(void);
+	typedef void(*MotorControllerChangeStateHandler)(ECVState);
 
 	class MotorController
 	{
@@ -37,9 +37,9 @@ namespace CheapVentilator
 
 		ECVState state;
 
-		MoveHandler onMoveHandler;
-		StopHandler onStopHandler;
-		ChangeStateHandler onChangeStateHandler;
+		MotorControllerMoveHandler onMoveHandler;
+		MotorControllerStopHandler onStopHandler;
+		MotorControllerChangeStateHandler onChangeStateHandler;
 
 		void setState(const ECVState state);
 		void nextState();
@@ -77,9 +77,9 @@ namespace CheapVentilator
 		void update();
 		void stop();
 
-		void onMove(MoveHandler handler) { onMoveHandler = handler; }
-		void onStop(StopHandler handler) { onStopHandler = handler; }
-		void onChangeState(ChangeStateHandler handler) { onChangeStateHandler = handler; }
+		void onMove(MotorControllerMoveHandler handler) { onMoveHandler = handler; }
+		void onStop(MotorControllerStopHandler handler) { onStopHandler = handler; }
+		void onChangeState(MotorControllerChangeStateHandler handler) { onChangeStateHandler = handler; }
 
 		void setSpeed(const unsigned short speed) { this->pumpingSpeed = speed; }
 		const unsigned short getSpeed() { return this->pumpingSpeed; }

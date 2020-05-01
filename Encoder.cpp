@@ -2,25 +2,25 @@
 
 namespace CheapVentilator
 {
-	Encoder::Encoder(const unsigned short CLKPin, const unsigned short DTPin, const unsigned short SWPin)
-	{
-    this->CLKPin = CLKPin;
-    this->DTPin = DTPin;
-    this->SWPin = SWPin;
+  Encoder::Encoder(const unsigned short outputA, const unsigned short outputB, const unsigned short switchOutput)
+  {
+    this->outputA = outputA;
+    this->outputB = outputB;
+    this->switchOutput = switchOutput;
 
-    this->delayTime = 100;
+    this->delayTime = 200;
     this->nextActionTime = 0;
-    this->clockwise = true;
-    this->click = false;
 
     this->onNextHandler = NULL;
     this->onPreviewHandler = NULL;
     this->onClickHandler = NULL;
 
-    pinMode (this->CLKPin, INPUT);
-    pinMode (this->DTPin,  INPUT);
-    pinMode (this->SWPin, INPUT_PULLUP);
-	}
+    pinMode (this->outputA, INPUT);
+    pinMode (this->outputB,  INPUT);
+    pinMode (this->switchOutput, INPUT_PULLUP);
+
+    this->aLastState = digitalRead(outputA);
+  }
 
   Encoder::~Encoder() {}
 
@@ -31,7 +31,7 @@ namespace CheapVentilator
 
   void Encoder::triggerOnNextEvent()
   {
-    setNextAction(100);
+    setNextAction(delayTime);
     if (onNextHandler != NULL)
       onNextHandler();
   }
@@ -45,36 +45,40 @@ namespace CheapVentilator
 
   void Encoder::triggerOnClick()
   {
-    setNextAction(delayTime);
+    setNextAction(500);
     if (onClickHandler != NULL)
       onClickHandler();
   }
 
   void Encoder::update()
   {
+    aState = digitalRead(outputA);
     unsigned long now = millis();
-    unsigned int currentCKL = digitalRead(CLKPin);
-    unsigned int currentDT = digitalRead(DTPin);
-    bool currentClick = digitalRead(SWPin) == LOW;
 
     if (now < nextActionTime)
-      return;
-
-    // check the switch status (button)
-    if(currentClick)
     {
-      click = currentClick;
-      triggerOnClick();
+      aLastState = aState;
+      return;
     }
 
-    // no direct change.
-    if (currentCKL != currentDT)
+    if (switchOutput > 0 && digitalRead(switchOutput) == LOW)
     {
-      clockwise = currentCKL;
-      if (currentCKL)
+      if (!switchLastState)
+        triggerOnClick();
+
+      switchLastState = true;
+    }
+    else
+      switchLastState = false;
+
+    if (aState != aLastState)
+    {
+      if (digitalRead(outputB) != aState)
         triggerOnNextEvent();
       else
         triggerOnPreview();
     }
+    
+    aLastState = aState;
   }
 }
