@@ -74,9 +74,9 @@ namespace CheapVentilator
     if (aState != aLastState)
     {
       if (digitalRead(outputB) != aState)
-        triggerOnNextEvent();
-      else
         triggerOnPreview();
+      else
+        triggerOnNextEvent();
     }
     
     aLastState = aState;

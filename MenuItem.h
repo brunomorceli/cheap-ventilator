@@ -17,13 +17,16 @@ namespace CheapVentilator
 
   struct MenuRenderItem {
     String title;
-    int min;
-    int max;
-    int amount;
-    int amountStep;
+    float minVal;
+    float maxVal;
+    float amount;
+    float amountStep;
     String amountLabel;
     boolean selected;
+    boolean editing;
   };
+
+  typedef void(*MenuChangeAmountHandler)(float);
 
 	class MenuItem
 	{
@@ -31,24 +34,30 @@ namespace CheapVentilator
     eMenuItemType type;
 
     String title;
-    int min;
-    int max;
-    int amount;
-    int amountStep;
+    float minVal;
+    float maxVal;
+    float amount;
+    float amountStep;
 
     Vector<MenuItem*> items;
-    short selectedItem;
+    unsigned short selectedItem;
+    boolean selected;
+    boolean editing;
+
+    MenuChangeAmountHandler changeAmountHandler;
+
+    void emitChangeAmount();
 
 	public:
 		MenuItem(String title);
 
     MenuItem(
       String title,
-      const int min,
-      const int max,
-      const int amount,
+      const float minVal,
+      const float maxVal,
+      const float amount,
       const eMenuItemType type=PERCENT,
-      const unsigned int amountStep=1
+      const float amountStep=1
     );
 
     ~MenuItem();
@@ -57,27 +66,36 @@ namespace CheapVentilator
     void setParent(MenuItem* parent) { this->parent = parent; }
     eMenuItemType getType() { return type; }
     String getTitle() { return title; }
-    int getMin() { return min; }
-    int getMax() { return max; }
-    int getAmount() { return amount; }
-    int getAmountStep() { return amountStep; }
+    float getMin() { return minVal; }
+    float getMax() { return maxVal; }
+    float getAmount() { return amount; }
+    float getAmountStep() { return amountStep; }
     String getAmountLabel();
     unsigned short getItemCount() { return items.size(); }
 
-    void addItem(MenuItem* item, boolean selected=false);
+    bool getEditing() { return editing; }
+    void setEditing(bool stat) { this->editing = stat; }
+    void toggleEditing() { setEditing(!editing); }
 
-    void increase(const unsigned int val) { amount = constrain(amount + val, min, max); }
-    void increase() { increase(amountStep); }
-    void decrease(const unsigned int val) { amount = constrain(amount - val, min, max); }
-    void decrease() { decrease(amountStep); }
+    bool getSelected() { return selected; }
+    void setSelected(bool stat) { this->selected = stat; }
+    void toggleSelected() { setSelected(!selected); }
+
+    void addItem(MenuItem* item);
+
+    float increase(const float val);
+    float increase() { return increase(amountStep); }
+    float decrease(const float val);
+    float decrease() { return decrease(amountStep); }
 
     void selectNextItem();
     void selectPreviewItem();
     MenuItem* getSelectedItem() { return items[selectedItem]; }
 
-    MenuRenderItem getRender(bool selected);
-    MenuRenderItem getRender() { return getRender(false); }
+    MenuRenderItem getRender();
     void getRenderItems(Vector<MenuRenderItem> &result);
+
+    void onChangeAmount(MenuChangeAmountHandler handler) { changeAmountHandler = handler; }
 	};
 }
 

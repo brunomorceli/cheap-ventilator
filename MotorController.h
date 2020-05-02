@@ -29,6 +29,9 @@ namespace CheapVentilator
 		const unsigned short minForward = 1;
 		const unsigned short maxForward = 1200;
 
+		const unsigned short minIdleTime = 0;
+		const unsigned short maxIdletime = 8000;
+
 		unsigned short pumpingSpeed;
 		unsigned short pumpingForward;
 
@@ -81,13 +84,13 @@ namespace CheapVentilator
 		void onStop(MotorControllerStopHandler handler) { onStopHandler = handler; }
 		void onChangeState(MotorControllerChangeStateHandler handler) { onChangeStateHandler = handler; }
 
-		void setSpeed(const unsigned short speed) { this->pumpingSpeed = speed; }
+		void setSpeed(const unsigned short speed) { this->pumpingSpeed = constrain(speed, minSpeed, maxSpeed); }
 		const unsigned short getSpeed() { return this->pumpingSpeed; }
 
-		void setForward(const unsigned short forward) { this->pumpingForward = forward; }
+		void setForward(const unsigned short forward) { this->pumpingForward = constrain(forward, minForward, maxForward); }
 		const unsigned short getForward() { return this->pumpingForward; }
 
-		void setIdleTime(const unsigned int milliseconds) { this->idleTime = milliseconds; }
+		void setIdleTime(const unsigned int milliseconds) { this->idleTime = constrain(milliseconds, minIdleTime, maxIdletime); }
 		const unsigned int getIdleTime() { return this->idleTime; }
 
 		char const* getStateName(ECVState);
