@@ -10,12 +10,14 @@ namespace CheapVentilator
 {
   enum eMenuItemType
   {
+    ROOT,
     RANGE,
-    PERCENT,
-    SELECT
+    VALUE,
+    TEXT
   };
 
   struct MenuRenderItem {
+    eMenuItemType type;
     String title;
     float minVal;
     float maxVal;
@@ -34,10 +36,13 @@ namespace CheapVentilator
     eMenuItemType type;
 
     String title;
+    String text;
     float minVal;
     float maxVal;
     float amount;
     float amountStep;
+    String suffix;
+    String prefix;
 
     Vector<MenuItem*> items;
     unsigned short selectedItem;
@@ -50,14 +55,17 @@ namespace CheapVentilator
 
 	public:
 		MenuItem(String title);
+		MenuItem(String title, String text);
 
     MenuItem(
       String title,
       const float minVal,
       const float maxVal,
       const float amount,
-      const eMenuItemType type=PERCENT,
-      const float amountStep=1
+      const eMenuItemType type=VALUE,
+      const float amountStep=1,
+      const String prefix="",
+      const String suffix=""
     );
 
     ~MenuItem();

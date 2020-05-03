@@ -6,11 +6,31 @@ namespace CheapVentilator
   {
     this->parent = NULL;
     this->title = title;
-    this->type = SELECT;
+    this->text = String("");
+    this->type = ROOT;
 
     this->minVal = 0;
     this->maxVal = 0;
     this->amount = 0;
+    this->amountStep = 0;
+    this->prefix = String("");
+    this->suffix = String("");
+    this->selected = false;
+    this->editing = false;
+  }
+
+  MenuItem::MenuItem(String title, String text)
+  {
+    this->parent = NULL;
+    this->title = title;
+    this->text = text;
+    this->type = TEXT;
+
+    this->minVal = 0;
+    this->maxVal = 0;
+    this->amount = 0;
+    this->prefix = String("");
+    this->suffix = String("");
     this->amountStep = 0;
     this->selected = false;
     this->editing = false;
@@ -22,16 +42,21 @@ namespace CheapVentilator
     const float maxVal,
     const float amount,
     const eMenuItemType type,
-    const float amountStep
+    const float amountStep,
+    String prefix,
+    String suffix
   )
   {
     this->parent = NULL;
     this->title = title;
+    this->text = String("");
     this->type = type;
 
     this->minVal = minVal;
     this->maxVal = maxVal;
     this->amount = constrain(amount, minVal, maxVal);
+    this->prefix = String(prefix);
+    this->suffix = String(suffix);
     this->amountStep = amountStep;
     this->selected = false;
     this->editing = false;
@@ -49,19 +74,22 @@ namespace CheapVentilator
   {
     String result = "";
 
-    if (type == RANGE)
+    switch (type)
     {
+    case RANGE:
+      result += prefix;
       result += String((int)amount);
-      result += " / ";
+      result += "/";
       result += String((int)maxVal);
-
-      return result;
-    }
-
-    if (type == PERCENT)
-    {
-      result += String((int)((amount * 100) / maxVal));
-      result += "%";
+      result += suffix;
+      break;
+    case VALUE: 
+      result += prefix;
+      result += (int)amount;
+      result += suffix;
+    default:
+      result += text;
+      break;
     }
 
     return result;
@@ -69,7 +97,7 @@ namespace CheapVentilator
 
   void MenuItem::addItem(MenuItem* item)
   {
-    if (type != SELECT)
+    if (type != ROOT)
       return;
 
     item->setParent(this);
@@ -115,6 +143,7 @@ namespace CheapVentilator
   {
     MenuRenderItem result
     {
+      this->type,
       this->title,
       this->minVal,
       this->maxVal,

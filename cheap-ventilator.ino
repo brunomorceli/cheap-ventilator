@@ -20,23 +20,50 @@ using namespace CheapVentilator;
 //                      MENU
 // =============================================
 
-void printOptions(MenuItem* menuItem, Adafruit_SSD1306 &display)
+void drawBar(Adafruit_SSD1306 &display, int VALUE, int yPos, int barHeight=10, int displayWidth=128)
+{
+  int fillWidth = (int)(((float) (displayWidth-4) / 100.0f) * VALUE);
+
+  display.drawRect(1, yPos, displayWidth - 1, barHeight, WHITE);
+  display.fillRect(3, yPos + 2, constrain(fillWidth, 0, displayWidth-4), barHeight-4, WHITE);
+}
+
+void drawItem(Adafruit_SSD1306 &display, MenuRenderItem item)
 {
   display.clearDisplay();
 
-  MenuRenderItem item = menuItem->getSelectedItem()->getRender();
-
-  display.setCursor(0, 0);
+  display.setTextSize(1);
+  display.setCursor(0, 2);
   display.print(item.title);
 
-  display.setCursor(0, 10);
+  if (item.type == TEXT)
+  {
+    display.setTextSize(1);
+    display.setCursor(0, 12);
+    display.print(item.amountLabel);
 
-  String label = item.amountLabel;
-  
-  if (item.editing)
-    label = "set: " + label;
+    display.display();
+    return;
+  }
 
-  display.print(label);
+  if (!item.editing)
+  {
+    display.setTextSize(2);
+    display.setCursor(0, 12);
+    display.print(item.amountLabel);
+
+    display.display();
+    return;
+  }
+
+  int barHeight = 10;
+  int barWidth = (item.amount * 100) / item.maxVal;
+  drawBar(display, barWidth, 12, barHeight);
+
+  display.setTextSize(1);
+  display.setCursor(10, 14 + barHeight);
+  display.print(item.amountLabel);
+
   display.display();
 }
 
@@ -60,27 +87,26 @@ void setup()
   display.clearDisplay();
 
   // SPEED
-  MenuItem* speedItem = new MenuItem("Speed", 1, 100, 50, PERCENT, 10);
+  MenuItem* speedItem = new MenuItem("Forward Speed", 10, 100, 50, VALUE, 10, "", "%");
   speedItem->onChangeAmount([](float amount) { cvMotorController.setSpeed(amount * 2.5f); });
   menu.addItem(speedItem);
 
-  // PRESSURE
-  MenuItem* pressureItem = new MenuItem("Pressure", 1, 100, 60, PERCENT, 10);
-  pressureItem->onChangeAmount([](float amount) { cvMotorController.setForward(amount * 9); });
-  menu.addItem(pressureItem);
+  // FORWARD DISTANCE
+  MenuItem* forwardItem = new MenuItem("Forward Distance", 0, 100, 60, VALUE, 10, "", "%");
+  forwardItem->onChangeAmount([](float amount) { cvMotorController.setForward(amount * 9); });
+  menu.addItem(forwardItem);
 
   // IDLE TIME
-  MenuItem* idleTimeItem = new MenuItem("Idle Time", 1, 8, 3, RANGE, 1);
+  MenuItem* idleTimeItem = new MenuItem("Idle Time", 0, 8, 3, VALUE, 1, "", " sec");
   idleTimeItem->onChangeAmount([](float amount) { cvMotorController.setIdleTime(amount * 1000); });
   menu.addItem(idleTimeItem);
 
-  // LANGUAGE
-  MenuItem* languageItem = new MenuItem("Language");
-  languageItem->addItem(new MenuItem("English"));
-  languageItem->addItem(new MenuItem("Portugues"));
-  menu.addItem(languageItem);
-  
+  // ABOUT
+  MenuItem* aboutItem = new MenuItem("Created by:", "Bruno Morceli\r\npirofagista@gmail.com");
+  menu.addItem(aboutItem);
 
+  drawItem(display, menu.getSelectedItem()->getRender());
+  
   cvMotorController.onChangeState([](ECVState state) {
     //Serial.println(cvMotorController.getStateName());
   });
@@ -106,7 +132,7 @@ void setup()
     else
       menu.selectNextItem();
 
-    printOptions(&menu, display);
+    drawItem(display, menu.getSelectedItem()->getRender());
   });
 
   encoder.onPreview([]() {
@@ -115,12 +141,12 @@ void setup()
     else
       menu.selectPreviewItem();
 
-    printOptions(&menu, display);
+    drawItem(display, menu.getSelectedItem()->getRender());
   });
 
   encoder.onClick([]() {
     menu.toggleEditing();
-    printOptions(&menu, display);
+    drawItem(display, menu.getSelectedItem()->getRender());
   });
 }
 
