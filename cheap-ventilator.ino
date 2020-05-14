@@ -108,7 +108,7 @@ void setup()
   drawItem(display, menu.getSelectedItem()->getRender());
   
   cvMotorController.onChangeState([](ECVState state) {
-    //Serial.println(cvMotorController.getStateName());
+    Serial.println(cvMotorController.getStateName());
   });
 
   cvMotorController.onStop([]() {

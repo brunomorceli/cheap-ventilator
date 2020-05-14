@@ -105,7 +105,7 @@ namespace CheapVentilator
 
 	void MotorController::begin()
 	{
-		pinMode(switchPin, INPUT);
+		pinMode(switchPin, INPUT_PULLUP);
 		restart();
 	}
 
@@ -138,7 +138,7 @@ namespace CheapVentilator
 			return;
 		}
 		
-		int switchPushed = digitalRead(switchPin) == HIGH;
+		int switchPushed = digitalRead(switchPin) == LOW;
 		if (state == BACK && switchPushed)
 			nextState();
 	}
